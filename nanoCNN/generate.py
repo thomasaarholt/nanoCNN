@@ -66,7 +66,7 @@ def ellipsoid_and_tetrahedron_image(N_particles=10, shape=(128, 128), higher_rad
     #for i in range(N_particles):
     n = 0
     while n < N_particles:
-        xysize = np.random.randint(5,32)
+        xysize = np.random.randint(5,70)  # changed size from 32
         half_xysize = xysize // 2
         current_shape = 'None'
 
