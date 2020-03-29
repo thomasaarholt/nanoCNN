@@ -294,21 +294,29 @@ def save_dataset_pickle(filename = "data", overwrite=False, nImages=100, shape=(
     with open(p / '{}.pickle'.format(filename), writemode) as f:
         for i in tqdm(range(nImages), desc = "Images"):
             N = np.random.randint(minnumber,maxnumber)
-            img, label = create_data(particle_number=N, shape=shape, centre_labels=False, minsize=minsize, maxsize=maxsize, fraction_tetra=fraction_tetra, fraction_cube=fraction_cube, no_overlap=no_overlap, labelled_shapes = labelled_shapes,)
+            img, label = create_data(
+                particle_number=N, shape=shape, centre_labels=False, 
+                minsize=minsize, maxsize=maxsize, 
+                fraction_tetra=fraction_tetra, fraction_cube=fraction_cube, 
+                no_overlap=no_overlap, labelled_shapes = labelled_shapes,)
+
+            img = img[..., None]
+            label = label[..., None]
             pickle.dump((img, label), f)
 
-def generator(x):
-    'Yields (X, y) dataset'
-    while True:
-        try:
-            yield pickle.load(x)
-        except EOFError:
-            break
+
 
 def load_generator_pickle(filename='data'):
     p = Path('dataset')
-    f = open(p / f'{filename}.pickle', 'rb')
-    return generator(f)
+    x = open(p / f'{filename}.pickle', 'rb')
+    def generator():
+        'Yields (X, y) dataset'
+        while True:
+            try:
+                yield pickle.load(x)
+            except EOFError:
+                break
+    return generator
 
 def Tetrahedron(vertices):
     """
