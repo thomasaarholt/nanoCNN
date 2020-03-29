@@ -291,12 +291,11 @@ def save_dataset_pickle(filename = "data", overwrite=False, nImages=100, shape=(
 
     writemode = 'ab' if not overwrite else 'wb'
 
-    with open(p / '{}_raw.pickle'.format(filename), writemode) as raw, open(p / '{}_label.pickle'.format(filename), 'ab') as lab:
+    with open(p / '{}.pickle'.format(filename), writemode) as f:
         for i in tqdm(range(nImages), desc = "Images"):
             N = np.random.randint(minnumber,maxnumber)
             img, label = create_data(particle_number=N, shape=shape, centre_labels=False, minsize=minsize, maxsize=maxsize, fraction_tetra=fraction_tetra, fraction_cube=fraction_cube, no_overlap=no_overlap, labelled_shapes = labelled_shapes,)
-            pickle.dump(img, raw)
-            pickle.dump(label, lab)
+            pickle.dump((img, label), f)
 
 def generator(x):
     while True:
