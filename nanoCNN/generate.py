@@ -317,7 +317,7 @@ def load_generator_pickle(filename='data'):
             try:
                 yield pickle.load(x)
             except EOFError:
-                raise StopIteration
+                break
     return generator
 
 def Tetrahedron(vertices):
