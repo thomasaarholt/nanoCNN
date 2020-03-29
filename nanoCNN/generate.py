@@ -290,20 +290,22 @@ def save_dataset_pickle(filename = "data", overwrite=False, nImages=100, shape=(
     p.mkdir(exist_ok=True, parents=True)
 
     writemode = 'ab' if not overwrite else 'wb'
+    i = 0
+    try:
+        with open(p / '{}.pickle'.format(filename), writemode) as f:
+            for i in tqdm(range(nImages), desc = "Images"):
+                N = np.random.randint(minnumber,maxnumber)
+                img, label = create_data(
+                    particle_number=N, shape=shape, centre_labels=False, 
+                    minsize=minsize, maxsize=maxsize, 
+                    fraction_tetra=fraction_tetra, fraction_cube=fraction_cube, 
+                    no_overlap=no_overlap, labelled_shapes = labelled_shapes,)
 
-    with open(p / '{}.pickle'.format(filename), writemode) as f:
-        for i in tqdm(range(nImages), desc = "Images"):
-            N = np.random.randint(minnumber,maxnumber)
-            img, label = create_data(
-                particle_number=N, shape=shape, centre_labels=False, 
-                minsize=minsize, maxsize=maxsize, 
-                fraction_tetra=fraction_tetra, fraction_cube=fraction_cube, 
-                no_overlap=no_overlap, labelled_shapes = labelled_shapes,)
-
-            img = img[..., None]
-            label = label[..., None]
-            pickle.dump((img, label), f)
-
+                img = img[..., None]
+                label = label[..., None]
+                pickle.dump((img, label), f)
+    except KeyboardInterrupt:
+        print(f"User stopped after {i} writes")
 
 
 def load_generator_pickle(filename='data'):
