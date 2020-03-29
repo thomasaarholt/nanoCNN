@@ -48,7 +48,7 @@ def get_radius(A, B):
     return np.sqrt(((A - B)**2).sum(-1))
 
 
-def ellipsoid_and_tetrahedron_image(N_particles=10, shape=(128, 128), higher_radii=2, minradius=6, fraction_tetra=1/3, fraction_cube=1/3, no_overlap=False, labelled_shapes=False, use_cupy=False):
+def ellipsoid_and_tetrahedron_image(N_particles=10, shape=(128, 128), higher_radii=2, minsize=5, maxsize=40, fraction_tetra=1/3, fraction_cube=1/3, no_overlap=False, labelled_shapes=False, use_cupy=False):
     'Create an image of shape with tetrahedrons and spheres in it'
     large_image_shape = np.multiply(shape, 2)
     large_image = np.zeros(large_image_shape)
@@ -65,7 +65,89 @@ def ellipsoid_and_tetrahedron_image(N_particles=10, shape=(128, 128), higher_rad
     centrecoordinates = []
     #for i in range(N_particles):
     n = 0
-    while n < N_particles:
+    attempts = 0
+    while n < N_particles and attempts < 10:
+        xysize = np.random.randint(minsize, maxsize)  # changed size from 32
+        half_xysize = xysize // 2
+        current_shape = 'None'
+
+        random_float = np.random.random()
+
+        label = {
+            'tetrahedron': 1,
+            'cube': 2,
+            'ellipsoid': 3,
+        }
+
+        if random_float < fraction_tetra:
+            current_shape = 'tetrahedron'
+            ell, large_ell = generate_tetrahedron_flat(xysize, use_cupy=use_cupy)
+            large_ell = ell # large_ell has wrong shape for rest of function
+        elif random_float < (fraction_tetra + fraction_cube):
+            # cube
+            current_shape = 'cube'
+            ell = generate_cuboid_flat(xysize)
+            large_ell = ell
+        else:
+            current_shape = 'ellipsoid'
+            ell, large_ell = generate_random_ellipsoid(xysize, also_make_with_higher_radii=True, higher_radii=higher_radii)
+        
+        xcoordinate = np.random.randint(quarter - half_xysize, threequarter-half_xysize)
+        ycoordinate = np.random.randint(quarter - half_xysize, threequarter-half_xysize) #(0, large_image_shape[1] - xysize)
+        centre_x = xcoordinate + xysize // 2 - quarter
+        centre_y = ycoordinate + xysize // 2 - quarter
+
+        crop = np.s_[xcoordinate:xcoordinate+xysize, ycoordinate:ycoordinate+xysize]
+        
+        if no_overlap:
+            ell_contains_counts = ell.astype(bool)
+            counts = large_image[crop][ell_contains_counts].sum()
+            if attempts >= 10:
+                break
+            if counts > 0:
+                attempts += 1
+                continue
+        attempts = 0
+        large_image[crop] += ell
+        centrecoordinates.append((centre_x, centre_y))
+
+        large_image2[crop] += large_ell
+        intmask = ell.astype(bool).astype("uint8")
+        intmask2 = ell.astype(bool).astype("uint8")
+        if labelled_shapes:
+            mask[crop] += intmask * label[current_shape]
+            mask2[crop] += intmask2 * label[current_shape]
+        else:
+            mask[crop] += intmask
+            mask2[crop] += intmask2
+        n += 1
+    central_image = np.s_[quarter:threequarter, quarter:threequarter]
+    image = large_image[central_image]
+    image2 = large_image2[central_image]
+    mask = mask[central_image]
+    mask2 = mask2[central_image]
+    return image, image2, mask, mask2, centrecoordinates
+
+
+def old_ellipsoid_and_tetrahedron_image(N_particles=10, shape=(128, 128), higher_radii=2, minradius=6, fraction_tetra=1/3, fraction_cube=1/3, no_overlap=False, labelled_shapes=False, use_cupy=False):
+    'Create an image of shape with tetrahedrons and spheres in it'
+    large_image_shape = np.multiply(shape, 2)
+    large_image = np.zeros(large_image_shape)
+    large_image2 = np.zeros(large_image_shape)
+
+    mask = np.zeros(large_image_shape)
+    mask2 = np.zeros(large_image_shape)
+
+    quarter = large_image_shape[0]//4
+    threequarter = large_image_shape[0] * 3 // 4
+    xcoordinates = []
+    ycoordinates = []
+    
+    centrecoordinates = []
+    #for i in range(N_particles):
+    n = 0
+    attempts = 0
+    while n < N_particles and attempts < 10:
         xysize = np.random.randint(5,70)  # changed size from 32
         half_xysize = xysize // 2
         current_shape = 'None'
@@ -106,8 +188,12 @@ def ellipsoid_and_tetrahedron_image(N_particles=10, shape=(128, 128), higher_rad
         if no_overlap:
             ell_contains_counts = ell.astype(bool)
             counts = large_image[crop][ell_contains_counts].sum()
+            if attempts >= 10:
+                break
             if counts > 0:
+                attempts += 1
                 continue
+        attempts = 0
         large_image[crop] += ell
         centrecoordinates.append((centre_x, centre_y))
 
@@ -121,7 +207,6 @@ def ellipsoid_and_tetrahedron_image(N_particles=10, shape=(128, 128), higher_rad
             mask[crop] += intmask
             mask2[crop] += intmask2
         n += 1
-
     central_image = np.s_[quarter:threequarter, quarter:threequarter]
     image = large_image[central_image]
     image2 = large_image2[central_image]
@@ -141,8 +226,8 @@ def add_noise(img):
     img = img + np.random.poisson(img)
     return img
 
-def create_data(particle_number=20, shape=(128, 128), centre_labels=False, higher_radii=1, minradius=10, fraction_tetra=1/3, fraction_cube=1/3, no_overlap=False, labelled_shapes=False):
-    img, img2, mask, mask2, centres = ellipsoid_and_tetrahedron_image(particle_number, shape=shape, fraction_tetra=fraction_tetra, fraction_cube=fraction_cube, no_overlap=no_overlap, labelled_shapes = labelled_shapes, higher_radii=higher_radii, minradius=minradius)
+def create_data(particle_number=20, shape=(128, 128), centre_labels=False, higher_radii=1, minsize=5, maxsize=40, fraction_tetra=1/3, fraction_cube=1/3, no_overlap=False, labelled_shapes=False):
+    img, img2, mask, mask2, centres = ellipsoid_and_tetrahedron_image(particle_number, shape=shape, minsize=minsize, maxsize=maxsize, fraction_tetra=fraction_tetra, fraction_cube=fraction_cube, no_overlap=no_overlap, labelled_shapes = labelled_shapes, higher_radii=higher_radii)
     #particles = mask == 1
     #overlaps = mask2 == 2
     #particles[overlaps] = False
@@ -197,6 +282,33 @@ def save_dataset_numpy(filename = "data", nImages=100, shape=(128, 128), minnumb
 
     return raw, labels
 
+import pickle
+
+def save_dataset_pickle(filename = "data", overwrite=False, nImages=100, shape=(128, 128), minnumber=1, maxnumber=30, minsize=5, maxsize=40, noise=True, cross=False, fraction_tetra=1/3, fraction_cube=1/3, no_overlap=False, labelled_shapes=False, save_example=True):
+    'Draw images with tetrahedrons and ellipsoids on it. Returns raw, labels.'
+    p = Path('dataset')
+    p.mkdir(exist_ok=True, parents=True)
+
+    writemode = 'ab' if not overwrite else 'wb'
+
+    with open(p / '{}_raw.pickle'.format(filename), writemode) as raw, open(p / '{}_label.pickle'.format(filename), 'ab') as lab:
+        for i in tqdm(range(nImages), desc = "Images"):
+            N = np.random.randint(minnumber,maxnumber)
+            img, label = create_data(particle_number=N, shape=shape, centre_labels=False, minsize=minsize, maxsize=maxsize, fraction_tetra=fraction_tetra, fraction_cube=fraction_cube, no_overlap=no_overlap, labelled_shapes = labelled_shapes,)
+            pickle.dump(img, raw)
+            pickle.dump(label, lab)
+
+def generator(x):
+    while True:
+        try:
+            yield pickle.load(x)
+        except EOFError:
+            break
+
+def load_generator_pickle(filename='data', raw_or_label='raw'):
+    p = Path('dataset')
+    f = open(p / f'{filename}_{raw_or_label}.pickle', 'rb')
+    return generator(f)
 
 def Tetrahedron(vertices):
     """
