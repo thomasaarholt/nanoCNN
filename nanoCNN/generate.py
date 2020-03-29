@@ -298,15 +298,16 @@ def save_dataset_pickle(filename = "data", overwrite=False, nImages=100, shape=(
             pickle.dump((img, label), f)
 
 def generator(x):
+    'Yields (X, y) dataset'
     while True:
         try:
             yield pickle.load(x)
         except EOFError:
             break
 
-def load_generator_pickle(filename='data', raw_or_label='raw'):
+def load_generator_pickle(filename='data'):
     p = Path('dataset')
-    f = open(p / f'{filename}_{raw_or_label}.pickle', 'rb')
+    f = open(p / f'{filename}.pickle', 'rb')
     return generator(f)
 
 def Tetrahedron(vertices):
