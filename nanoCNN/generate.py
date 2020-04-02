@@ -307,12 +307,11 @@ def save_dataset_pickle(filename = "data", overwrite=False, nImages=100, shape=(
     except KeyboardInterrupt:
         print(f"User stopped after {i} writes")
 
-
 def load_generator_pickle(filename='data'):
     p = Path('dataset')
-    x = open(p / f'{filename}.pickle', 'rb')
     def generator():
         'Yields (X, y) dataset'
+        x = open(p / f'{filename}.pickle', 'rb')
         while True:
             try:
                 yield pickle.load(x)
