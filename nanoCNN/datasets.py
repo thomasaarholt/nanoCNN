@@ -1,5 +1,5 @@
 import tensorflow as tf
-from generate import load_generator_pickle
+from .generate import load_generator_pickle
 from scipy.ndimage import gaussian_filter
 import matplotlib.pyplot as plt
 
