@@ -16,7 +16,7 @@ def get_generator(g, gaussian_kernel=1, normalise=True, binary_labels=False):
                     a /= a.max()
                 if binary_labels:
                     b[b > 0] = 1
-                if gfilter:
+                if gaussian_kernel:
                     a = gaussian_filter(a, (gaussian_kernel, gaussian_kernel, 0))
                 yield a, b
             except:
