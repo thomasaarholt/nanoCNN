@@ -6,23 +6,25 @@ import matplotlib.pyplot as plt
 def num_batches(total_items, batch_size):
     return int(total_items / batch_size)
 
-def get_generator(g, gaussian_kernel=1, normalise=True, binary_labels=False):
-    def gen():
-        while True:
-            try:
-                a, b = g.__next__()
-                if normalise:
-                    a -= a.min()
-                    a /= a.max()
-                if binary_labels:
-                    b[b > 0] = 1
-                if gaussian_kernel:
-                    a = gaussian_filter(a, (gaussian_kernel, gaussian_kernel, 0))
-                yield a, b
-            except:
-                return
-    return gen
+def get_generator(gen, gaussian_kernel=1, normalise=True, binary_labels=False):
 
+    return generator
+
+def generator(gen, gaussian_kernel=1, normalise=True, binary_labels=False):
+    while True:
+        try:
+            a, b = gen.__next__()
+            #if normalise:
+            #    a -= a.min()
+            #    a /= a.max()
+            #if binary_labels:
+            #    b[b > 0] = 1
+            #if gaussian_kernel:
+            #    a = gaussian_filter(a, (gaussian_kernel, gaussian_kernel, 0))
+            yield a, b
+        except:
+            return
+            
 def dataset_function(dataset='data', epochs=10, batch_size=32, gaussian_kernel=1, normalise=True, binary_labels=False):
     print(f"Epochs: {epochs}\nBatch Size: {batch_size}")
     shapes = (128, 128, 1), (128, 128, 1)

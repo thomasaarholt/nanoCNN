@@ -248,8 +248,37 @@ def create_data(particle_number=20, shape=(128, 128), centre_labels=False, highe
     img = normalise(img)
     return img, label
 
+def save_dataset(filename = "data", overwrite=False, nImages=100, shape=(128, 128), minnumber=1, maxnumber=30, minsize=5, maxsize=40, noise=True, cross=False, fraction_tetra=1/3, fraction_cube=1/3, no_overlap=False, labelled_shapes=False, save_example=True):
+    'Draw images with tetrahedrons and ellipsoids on it. Returns raw, labels.'
+    p = Path('dataset')
+    p.mkdir(exist_ok=True, parents=True)
+    arr = np.zeros((nImages, 2) + shape + (1,))
+    try:
+        for i in tqdm(range(nImages), desc = "Images"):
+            N = np.random.randint(minnumber,maxnumber)
+            img, label = create_data(
+                particle_number=N, 
+                shape=shape, 
+                centre_labels=False, 
+                minsize=minsize, 
+                maxsize=maxsize, 
+                fraction_tetra=fraction_tetra, 
+                fraction_cube=fraction_cube, 
+                no_overlap=no_overlap, 
+                labelled_shapes = labelled_shapes,)
 
-def save_dataset_numpy(filename = "data", nImages=100, shape=(128, 128), minnumber=1, maxnumber=30, noise=True, cross=False, fraction_tetra=1/3, fraction_cube=1/3, no_overlap=False, labelled_shapes=False, save_example=True):
+            img = img[..., None]
+            label = label[..., None]
+
+            arr[i,0] = img
+            arr[i,1] = label
+    except KeyboardInterrupt:
+        print(f"User stopped after {i-1} writes, saving array as " +  "{}_{}.npy".format(filename, i-1))
+    np.save(p / "{}_{}.npy".format(filename, i-1), arr[:i-1])
+    return arr[:i-1]
+
+
+def save_dataset_numpy_old(filename = "data", nImages=100, shape=(128, 128), minnumber=1, maxnumber=30, noise=True, cross=False, fraction_tetra=1/3, fraction_cube=1/3, no_overlap=False, labelled_shapes=False, save_example=True):
     'Draw images with tetrahedrons and ellipsoids on it. Returns raw, labels.'
     p = Path('dataset')
     p.mkdir(exist_ok=True, parents=True)
@@ -258,7 +287,14 @@ def save_dataset_numpy(filename = "data", nImages=100, shape=(128, 128), minnumb
     raw = []
     for i in tqdm(range(nImages), desc = "Images"):
         N = np.random.randint(minnumber,maxnumber)
-        img, label = create_data(particle_number=N, shape=shape, centre_labels=False, fraction_tetra=fraction_tetra, fraction_cube=fraction_cube, no_overlap=no_overlap, labelled_shapes = labelled_shapes,)
+        img, label = create_data(
+            particle_number=N, 
+            shape=shape, 
+            centre_labels=False, 
+            fraction_tetra=fraction_tetra, 
+            fraction_cube=fraction_cube, 
+            no_overlap=no_overlap, 
+            labelled_shapes = labelled_shapes,)
         raw.append(img)
         labels.append(label)
     #labels = np.array(labels, dtype="uint8"), 
@@ -296,16 +332,25 @@ def save_dataset_pickle(filename = "data", overwrite=False, nImages=100, shape=(
             for i in tqdm(range(nImages), desc = "Images"):
                 N = np.random.randint(minnumber,maxnumber)
                 img, label = create_data(
-                    particle_number=N, shape=shape, centre_labels=False, 
-                    minsize=minsize, maxsize=maxsize, 
-                    fraction_tetra=fraction_tetra, fraction_cube=fraction_cube, 
-                    no_overlap=no_overlap, labelled_shapes = labelled_shapes,)
+                    particle_number=N, 
+                    shape=shape, 
+                    centre_labels=False, 
+                    minsize=minsize, 
+                    maxsize=maxsize, 
+                    fraction_tetra=fraction_tetra, 
+                    fraction_cube=fraction_cube, 
+                    no_overlap=no_overlap, 
+                    labelled_shapes = labelled_shapes,)
 
                 img = img[..., None]
                 label = label[..., None]
                 pickle.dump((img, label), f)
     except KeyboardInterrupt:
         print(f"User stopped after {i} writes")
+
+
+
+
 
 def load_generator_pickle(filename='data'):
     p = Path('dataset')
