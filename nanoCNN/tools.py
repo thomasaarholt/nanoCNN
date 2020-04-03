@@ -26,24 +26,27 @@ def split_image_into_128(img):
 
 def segment_reshape_tiled_img(fit):
     img = segment(fit)
+    img = reshape_tiled_img(img)
+    return img
+
+def reshape_tiled_img(img):
     img = img.reshape((16, 16, 128, 128))
     img = np.concatenate(img, -1)
     img = np.concatenate(img, -2)
     return img
-
 def save_png_true_fit(name, img, fit):
     img = img / img.max()
     imageio.imwrite(name + "_true.png", (255*img).astype('uint8'))
     imageio.imwrite(name + "_fit.png", (255*fit).astype('uint8'))
 
-def predict_images(raw, model, split_retile=False, binary_segment=False):
+def predict_images(raw, model, split_retile=False):
     if split_retile:
         raw = split_image_into_128(raw)
     raw = normalise(raw)
     fit = model.predict(raw)
-    if binary_segment:
-        if split_retile:
-            fit = segment_reshape_tiled_img(fit)
-        else:
-            fit = segment(fit)
+    fit = one_hot_to_grayscale(fit)
+    if split_retile:
+        fit = reshape_tiled_img(fit)
+    else:
+        fit = segment(fit)
     return fit
