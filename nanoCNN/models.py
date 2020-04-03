@@ -2,6 +2,10 @@ from tensorflow.keras import Model
 from tensorflow.keras.layers import Input, InputLayer, Conv2D, Dropout, MaxPooling2D, concatenate, UpSampling2D
 
 def ShapesModel(classes=4, shape=(128, 128)):
+    if classes == 1:
+        loss = 'binary_crossentropy'
+    else:
+        loss = 'sparse_categorical_crossentropy'
     inputs = Input(shape=(128, 128, 1))
 
     # Encoder
@@ -35,5 +39,5 @@ def ShapesModel(classes=4, shape=(128, 128)):
     outputs = Conv2D(classes, (1, 1) , padding='same')(conv5)
 
     model = Model(inputs=inputs, outputs=outputs)
-    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer='adam', loss=loss, metrics=['accuracy'])
     return model
