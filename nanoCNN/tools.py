@@ -2,7 +2,7 @@ import numpy as np
 import imageio
 
 def one_hot_to_grayscale(fit):
-    return np.where(np.equal(fit.T, fit.max(-1).T).T)[-1].reshape((len(fit), 128, 128))
+    return np.argmax(fit, axis=-1)#np.where(np.equal(fit.T, fit.max(-1).T).T)[-1].reshape((len(fit), 128, 128))
 
 def segment(dataset):
     dataset = dataset.copy()
