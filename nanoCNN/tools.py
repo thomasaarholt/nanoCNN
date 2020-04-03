@@ -47,6 +47,4 @@ def predict_images(raw, model, split_retile=False):
     fit = one_hot_to_grayscale(fit)
     if split_retile:
         fit = reshape_tiled_img(fit)
-    else:
-        fit = segment(fit)
     return fit
