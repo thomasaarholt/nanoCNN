@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 import imageio
 
 def one_hot_to_grayscale(fit):
@@ -42,7 +42,7 @@ def predict_images(raw, model, split_retile=False):
     raw = normalise(raw)
     fit = model.predict(raw)
     if split_retile:
-        fit = segment_reshape_tiled_img()
+        fit = segment_reshape_tiled_img(fit)
     else:
         fit = segment_reshape_tiled_img(fit)
     return fit
