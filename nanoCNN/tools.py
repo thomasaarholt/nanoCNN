@@ -14,8 +14,8 @@ def segment(dataset):
 
 def normalise(img):
     img = img.copy()
-    img = img - img.min(axis=(-1,-2))
-    img = img / img.max(axis=(-1,-2))
+    img = (img.T - img.min(axis=(-1,-2))).T
+    img = (img.T / img.max(axis=(-1,-2))).T
     return img
 
 def split_image_into_128(img):
